@@ -2,11 +2,11 @@
   (:refer-clojure :exclude [==])
   (:use [clojure.core.logic]))
 
-(defn zeroo [n]
-  (== (numb '()) n))
-
 (defn numb [n]
   (with-meta n {:num true}))
+
+(defn zeroo [n]
+  (== (numb '()) n))
 
 (defn build-num [n]
   (numb

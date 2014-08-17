@@ -3,6 +3,15 @@
   (:use [clojure.core.logic]
         [recur.numbers]))
 
+
+;; Fibonacci recursive program evaluator.
+;; Implemented with Oleg's numbers.
+;; Runs forward in 180ms (same as fib with peano nums).
+;;
+;; Too long to run backwards. Need to speed up evaluator.
+;; Probably double recursion mess things up.
+
+
 (defn symbolo [x] (predc x symbol?))
 (defn listo   [x] (predc x list?))
 
@@ -76,8 +85,8 @@
            (not-in-envo 'fn env)
            (== `(~'closure ~x ~body ~env) val))]
    [(fresh [selfarg argv prevargv x body env- env2 t]
-           (== `(~'self ~selfarg) exp)
-           (not-in-envo 'self env)
+           (== `(~'recur ~selfarg) exp)
+           (not-in-envo 'recur env)
            (conso `(~'closure ~x ~body ~env-) t selves)
            (lookupo x env prevargv)
            (mentionso x selfarg)
@@ -125,8 +134,8 @@
 (let [fibfn '(fn [x]
                (if (<=1 x)
                  x
-                 (+ (self (dec (dec x)))
-                    (self (dec x)))))]
+                 (+ (recur (dec x))
+                    (recur (dec (dec x))))))]
 
   ;; ~126ms to evaluate (fib 7)
   (defn eval-fib []
@@ -140,5 +149,4 @@
    (eval-expo `(~q ~(build-num 2)) '() '() (build-num 1))
    (eval-expo `(~q ~(build-num 3)) '() '() (build-num 2))
    (eval-expo `(~q ~(build-num 4)) '() '() (build-num 3))
-   (eval-expo `(~q ~(build-num 5)) '() '() (build-num 5))
-   (eval-expo `(~q ~(build-num 6)) '() '() (build-num 8))))
+   (eval-expo `(~q ~(build-num 5)) '() '() (build-num 5))))

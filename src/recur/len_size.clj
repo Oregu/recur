@@ -3,6 +3,13 @@
   (:use [clojure.core.logic]
         [recur.peano]))
 
+
+;; Try to synthesize length program of minimal size.
+;; (So not to let mK to place several nested ifs.)
+
+;; In progress.
+
+
 (defn noo [tag u]
   (predc u (fn [x] (clojure.core/not= (if (coll? x) (first x) x) tag))))
 (defn symbolo [x] (predc x symbol?))

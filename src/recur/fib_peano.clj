@@ -3,6 +3,15 @@
   (:use [clojure.core.logic]
         [recur.peano]))
 
+
+;; Recursive evaluator of Fibonacci program with peano numbers.
+;; Evaluates (fib 7) in 180ms
+;; Wasn't able to synthesize one in 2 hours.
+
+;; Maybe I can speed up evaluation?
+;; This double recursion mess things.
+
+
 (defn symbolo [x] (predc x symbol?))
 
 (declare eval-expo)
@@ -65,8 +74,8 @@
      (not-in-envo 'fn env)
      (== `(~'closure ~x ~body ~env) val))]
    [(fresh [selfarg argv prevargv x body env- env2 t]
-     (== `(~'self ~selfarg) exp)
-     (not-in-envo 'self env)
+     (== `(~'recur ~selfarg) exp)
+     (not-in-envo 'recur env)
      (conso `(~'closure ~x ~body ~env-) t selves)
      (lookupo x env prevargv)
      (mentionso x selfarg)
@@ -111,8 +120,8 @@
 (let [fibfn '(fn [x]
                (if (<=1 x)
                  x
-                 (+ (self (dec x))
-                    (self (dec (dec x))))))]
+                 (+ (recur (dec x))
+                    (recur (dec (dec x))))))]
 
   ;; (fibo 7) ~180 ms
   (defn eval-fib []

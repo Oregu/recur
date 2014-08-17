@@ -3,6 +3,11 @@
   (:use [clojure.core.logic]
         [recur.peano]))
 
+
+;; Evaluator able to evaluate length program recursive definition.
+;; And what is much more important -- able to synthesize one in 1m.
+
+
 (defn noo [tag u]
   (predc u (fn [x] (clojure.core/not= (if (coll? x) (first x) x) tag))))
 (defn symbolo [x] (predc x symbol?))
@@ -92,8 +97,8 @@
      (not-in-envo 'fn env)
      (== `(~'closure ~x ~body ~env) val))]
    [(fresh [selfarg argv prevargv x body env- env2 t]
-     (== `(~'self ~selfarg) exp)
-     (not-in-envo 'self env)
+     (== `(~'recur ~selfarg) exp)
+     (not-in-envo 'recur env)
      (conso `(~'closure ~x ~body ~env-) t selves)
      (lookupo x env prevargv)
      (mentionso x selfarg)
@@ -146,16 +151,16 @@
          (eval-expo `(~q ~'(list (zero))) '() '() '(s z))
          (eval-expo `(~q ~'(list (inc (zero)))) '() '() '(s s z))))))
 
-;; Testing
+;; Length evaluation and generation
 
 (let [lnfn '(fn [x]
               (if (empty? x)
                 (zero)
-                (inc (self (rest x)))))]
+                (inc (recur (rest x)))))]
 
   (defn eval-length []
     (run* [q]
-     (eval-expo `(~lnfn ~'(list (zero) (zero) (zero))) '() '() q))))
+          (eval-expo `(~lnfn ~'(list (zero) (zero) (zero))) '() '() q))))
 
 ;; Generates length program in ~60s
 (defn gen-length []
