@@ -1,11 +1,11 @@
-(ns recur.len
+(ns recur.len-escher
   (:refer-clojure :exclude [==])
   (:use [clojure.core.logic]
         [recur.peano]))
 
 
-;; Evaluator able to evaluate length program recursive definition.
-;; And what is much more important -- able to synthesize one in 1m.
+;; Recursive interpreter for length recursive program.
+;; Borrowing ideas from Escher paper.
 
 
 (defn noo [tag u]
@@ -106,13 +106,6 @@
      (lessero argv prevargv)
      (conso `(~x ~argv) env- env2)
      (eval-expo body env2 selves val))]
-   [(fresh [e1 e2 e3 t]
-     (== `(~'if ~e1 ~e2 ~e3) exp)
-     (not-in-envo 'if env)
-     (eval-expo e1 env selves t)
-     (conde
-      [(== true  t) (eval-expo e2 env selves val)]
-      [(== false t) (eval-expo e3 env selves val)]))]
    [(== `(~'zero) exp)
     (not-in-envo 'zero env)
     (zeroo val)]
@@ -137,6 +130,15 @@
      (eval-expo a env selves l)
      (resto l val))]))
 
+(defn if-expo [exp val]
+  (fresh [e1 e2 e3 t]
+   (== `(~'if ~e1 ~e2 ~e3) exp)
+   (not-in-envo 'if env)
+   (eval-expo e1 env selves t)
+   (conde
+    [(== true  t) (eval-expo e2 env selves val)]
+    [(== false t) (eval-expo e3 env selves val)])))
+
 ;; Length evaluation and generation
 
 (let [lnfn '(fn [x]
@@ -146,7 +148,7 @@
 
   (defn eval-length []
     (run* [q]
-          (eval-expo `(~lnfn ~'(list (zero) (zero) (zero))) '() '() q))))
+          (if-expo `(~lnfn ~'(list (zero) (zero) (zero))) '() '() q))))
 
 ;; Generates length program in ~60s
 (defn gen-length []
