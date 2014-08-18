@@ -133,7 +133,6 @@
 (defn if-expo [exp val]
   (fresh [e1 e2 e3 t]
    (== `(~'if ~e1 ~e2 ~e3) exp)
-   (not-in-envo 'if env)
    (eval-expo e1 env selves t)
    (conde
     [(== true  t) (eval-expo e2 env selves val)]
