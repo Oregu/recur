@@ -1,11 +1,11 @@
-(ns recur.fib-nat-fd
+(ns recur.fact-nat-fd
   (:refer-clojure :exclude [==])
   (:use [clojure.core.logic])
   (:require [clojure.core.logic.fd :as fd]
             [clojure.core.logic.protocols :as ps]))
 
 
-;; Fibonacci recursive program evaluator
+;; Factorial recursive program evaluator
 ;; with natural numbers and CLP(FD).
 
 
@@ -122,10 +122,6 @@
 (defn mentionso [x form]
   (fresh [h t]
    (not-num-or-symo form)
-   (not-intervalo x)
-   (not-intervalo form)
-   (not-intervalo h)
-   (not-intervalo t)
    (conde
     [(conso h t form)
      (== h x)]
@@ -170,7 +166,7 @@
            (eval-expo selfarg env selves argv)
            (not-num-or-symo selfarg)
            (mentionso x selfarg)
-           (fd/in argv prevargv (fd/interval 10)) ;; TODO
+           (fd/in argv prevargv (fd/interval 25)) ;; TODO
            (fd/< argv prevargv)
            (conso `(~x ~argv) env- env+)
            (conso `(~'closure ~x ~body ~argv ~env-) t selves-)
@@ -193,7 +189,7 @@
            (numbero val)
            (numbero n)
            (eval-expo a env selves n)
-           (fd/in n val (fd/interval 10)) ;; TODO
+           (fd/in n val (fd/interval 25)) ;; TODO
            (fd/+ 1 val n))]
    [(fresh [a l]
            (not-num-or-symo exp)
@@ -207,37 +203,35 @@
             [(!= l 0) (!= l 1) (fd/> l 1) (== val false)]))]
    [(fresh [a1 a2 va1 va2]
            (not-num-or-symo exp)
-           (== `(~'+ ~a1 ~a2) exp)
-           (not-in-envo '+ env)
+           (== `(~'* ~a1 ~a2) exp)
+           (not-in-envo '* env)
            (numbero va1)
            (numbero va2)
            (numbero val)
            (eval-expo a1 env selves va1)
            (eval-expo a2 env selves va2)
-           (fd/in va1 va2 val (fd/interval 10)) ;; TODO
-           (fd/+ va1 va2 val))]))
+           (fd/in va1 va2 val (fd/interval 25)) ;; TODO
+           (fd/* va1 va2 val))]))
 
 (defn evalo [e v]
   (eval-expo e '() '() v))
 
-;; Fibonacci
+;; Factorial
 
-(let [fibfn '(fn [x]
-               (if (<=1 x)
-                 x
-                 (+ (recur (dec x))
-                    (recur (dec (dec x))))))]
+(let [factfn '(fn [x]
+                (if (<=1 x)
+                  1
+                  (* x (recur (dec x)))))]
 
-  ;; ~150ms to evaluate (fib 7)
-  (defn eval-fib []
+  ;; ~30ms to evaluate (fact 4)
+  (defn eval-fact []
     (run 1 [q]
-     (evalo `(~fibfn 7) q))))
+     (evalo `(~factfn 4) q))))
 
-(defn gen-fib []
+(defn gen-fact []
   (run 1 [q]
-   (evalo `(~q 0) 0)
+   (evalo `(~q 0) 1)
    (evalo `(~q 1) 1)
-   (evalo `(~q 2) 1)
-   (evalo `(~q 3) 2)
-   (evalo `(~q 4) 3)
-   (evalo `(~q 5) 5)))
+   (evalo `(~q 2) 2)
+   (evalo `(~q 3) 6)
+   (evalo `(~q 4) 24)))
