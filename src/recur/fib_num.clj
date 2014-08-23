@@ -15,8 +15,6 @@
 (defn symbolo [x] (predc x symbol?))
 (defn listo   [x] (predc x list?))
 
-(declare eval-expo)
-
 (defn lookupo [x env t]
   (fresh [rest y v]
    (conso `(~y ~v) rest env)
@@ -32,46 +30,21 @@
      (not-in-envo x rest))]
    [(== '() env)]))
 
-(defn proper-listo [exp env selves val]
-  (conde
-   [(== '() exp)
-    (== '() val)]
-   [(fresh [a d t-a t-d]
-     (conso   a   d exp)
-     (conso t-a t-d val)
-     (eval-expo a env selves t-a)
-     (proper-listo d env selves t-d))]))
-
 (defn mentionso [x form]
-  (conde
-   [(fresh [h t]
-     (conso h t form)
-     (symbolo h)
-     (== h x))]
-   [(fresh [h t]
-     (!= h x)
-     (symbolo h)
-     (conso h t form)
-     (mentionso x t))]
-   [(fresh [h t]
-     (!= h x)
-     (conso h t form)
-     (mentionso x h))]))
-
-#_(defn mentionso [x form]
-  (conde
-   [(symbolo form) (== x form)]
-   [(listo form)
-    (fresh [h t]
+  (fresh [h t]
+   (conde
+    [(conso h t form)
+     (== h x)]
+    [(!= h x)
      (conso h t form)
      (conde
-      [(mentionso x h)]
-      [(mentionso x t)]))]))
+      [(mentionso x t)]
+      [(mentionso x h)])])))
 
 (defn eval-expo [exp env selves val]
   (conde
    [(symbolo exp) (lookupo exp env val)]
-   [(numo exp) (== exp val)]
+   #_[(numo exp) (== exp val)]
    [(fresh [rator rand x body env- a env2 selves2]
            (== `(~rator ~rand) exp)
            (eval-expo rator env selves `(~'closure ~x ~body ~env-))
@@ -101,14 +74,6 @@
            (conde
             [(== true  t) (eval-expo e2 env selves val)]
             [(== false t) (eval-expo e3 env selves val)]))]
-   #_[(== `(~'zero) exp)
-    (not-in-envo 'zero env)
-    (zeroo val)]
-   #_[(fresh [a n]
-           (== `(~'inc ~a) exp)
-           (not-in-envo 'inc env)
-           (eval-expo a env selves n)
-           (+o '(1) n val))]
    [(fresh [a n]
            (== `(~'dec ~a) exp)
            (not-in-envo 'dec env)
@@ -131,16 +96,19 @@
 
 ;; Fibonacci
 
-(let [fibfn '(fn [x]
-               (if (<=1 x)
+(let [fibbody '(if (<=1 x)
                  x
                  (+ (recur (dec x))
-                    (recur (dec (dec x))))))]
+                    (recur (dec (dec x)))))
+      fibfn `(~'fn [~'x] ~fibbody)]
 
   ;; ~126ms to evaluate (fib 7)
   (defn eval-fib []
     (run 1 [q]
-         (eval-expo `(~fibfn ~(build-num 7)) '() '() q))))
+         (eval-expo fibbody
+                    `((~'x ~(build-num 7)))
+                    `((~'closure ~'x ~fibbody ()))
+                    q))))
 
 (defn gen-fib []
   (run 1 [q]
@@ -150,3 +118,30 @@
    (eval-expo `(~q ~(build-num 3)) '() '() (build-num 2))
    (eval-expo `(~q ~(build-num 4)) '() '() (build-num 3))
    (eval-expo `(~q ~(build-num 5)) '() '() (build-num 5))))
+
+(defn gen-fib-fast []
+  (run 1 [q]
+       (eval-expo q
+                  `((~'x ~(build-num 0)))
+                  `((~'closure ~'x ~q 1 ()))
+                  (build-num 0))
+       (eval-expo q
+                  `((~'x ~(build-num 1)))
+                  `((~'closure ~'x ~q 1 ()))
+                  (build-num 1))
+       (eval-expo q
+                  `((~'x ~(build-num 2)))
+                  `((~'closure ~'x ~q 1 ()))
+                  (build-num 1))
+       (eval-expo q
+                  `((~'x ~(build-num 3)))
+                  `((~'closure ~'x ~q 1 ()))
+                  (build-num 2))
+       (eval-expo q
+                  `((~'x ~(build-num 4)))
+                  `((~'closure ~'x ~q 1 ()))
+                  (build-num 3))
+       (eval-expo q
+                  `((~'x ~(build-num 5)))
+                  `((~'closure ~'x ~q 1 ()))
+                  (build-num 5))))
