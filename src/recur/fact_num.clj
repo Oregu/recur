@@ -8,13 +8,11 @@
 ;; Implemented with Oleg's numbers.
 ;; Runs forward in 20ms.
 ;;
-;; Too long to run backwards. Need to speed up evaluator.
+;; Can generate factorial in 55 seconds.
+;; But uncomment numo branch and it doesn't return.
 
 
 (defn symbolo [x] (predc x symbol?))
-(defn listo   [x] (predc x list?))
-
-(declare eval-expo)
 
 (defn lookupo [x env t]
   (fresh [rest y v]
@@ -31,16 +29,6 @@
      (not-in-envo x rest))]
    [(== '() env)]))
 
-(defn proper-listo [exp env selves val]
-  (conde
-   [(== '() exp)
-    (== '() val)]
-   [(fresh [a d t-a t-d]
-     (conso   a   d exp)
-     (conso t-a t-d val)
-     (eval-expo a env selves t-a)
-     (proper-listo d env selves t-d))]))
-
 (defn mentionso [x form]
   (fresh [h t]
          (conde
@@ -56,7 +44,7 @@
 (defn eval-expo [exp env selves val]
   (conde
    [(symbolo exp) (lookupo exp env val)]
-   [(numo exp) (== exp val)]
+   ;; [(numo exp) (== val exp)]
    [(fresh [rator rand x body env- a env2 selves2]
            (== `(~rator ~rand) exp)
            (eval-expo rator env selves `(~'closure ~x ~body ~env-))
@@ -108,19 +96,43 @@
 
 ;; Fibonacci
 
-(let [factfn '(fn [x]
-                (if (<=1 x)
+(let [factbody '(if (<=1 x)
                   x
-                  (* x (recur (dec x)))))]
+                  (* x (recur (dec x))))
+      factfn `(~'fn [~'x] ~factbody)]
 
   ;; ~20ms to evaluate (fact 4)
   (defn eval-fact []
     (run 1 [q]
-         (eval-expo `(~factfn ~(build-num 4)) '() '() q))))
+         (eval-expo factbody
+                    `((~'x ~(build-num 4)))
+                    `((~'closure ~'x ~factbody ()))
+                    q))))
 
+;; Generates fact body in 55s
+(defn gen-fact-fast []
+  (run 1 [q]
+       (eval-expo q
+                  `((~'x ~(build-num 1)))
+                  `((~'closure ~'x ~q ()))
+                  (build-num 1))
+       (eval-expo q
+                  `((~'x ~(build-num 2)))
+                  `((~'closure ~'x ~q ()))
+                  (build-num 2))
+       (eval-expo q
+                  `((~'x ~(build-num 3)))
+                  `((~'closure ~'x ~q ()))
+                  (build-num 6))
+       (eval-expo q
+                  `((~'x ~(build-num 4)))
+                  `((~'closure ~'x ~q ()))
+                  (build-num 24))))
+
+;; Too long, no answer
 (defn gen-fact []
   (run 1 [q]
-   (eval-expo `(~q ~(build-num 1)) '() '() (build-num 1))
-   (eval-expo `(~q ~(build-num 2)) '() '() (build-num 2))
-   (eval-expo `(~q ~(build-num 3)) '() '() (build-num 6))
-   (eval-expo `(~q ~(build-num 4)) '() '() (build-num 24))))
+       (eval-expo `(~q ~(build-num 1)) '() '() (build-num 1))
+       (eval-expo `(~q ~(build-num 2)) '() '() (build-num 2))
+       (eval-expo `(~q ~(build-num 3)) '() '() (build-num 6))
+       (eval-expo `(~q ~(build-num 4)) '() '() (build-num 24))))
