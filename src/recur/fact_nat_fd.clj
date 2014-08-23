@@ -7,6 +7,10 @@
 
 ;; Factorial recursive program evaluator
 ;; with natural numbers and CLP(FD).
+;;
+;; Like with Oleg's numbers, its 46s to generate
+;; without numbero branch.
+;; Do not answer otherwise.
 
 
 (defn symbolo* [x]
@@ -136,7 +140,7 @@
    [(symbolo exp)
     (numbero val) ;; TODO Wrong, but fails in lookupo without it
     (lookupo exp env val)]
-   [(numbero exp)
+   #_[(numbero exp)
     (numbero val)
     (== exp val)]
    [(fresh [rator rand x body env- a env+ selves+]
@@ -218,16 +222,20 @@
 
 ;; Factorial
 
-(let [factfn '(fn [x]
-                (if (<=1 x)
-                  1
-                  (* x (recur (dec x)))))]
+(let [factbody '(if (<=1 x)
+                  x
+                  (* x (recur (dec x))))
+      factfn `(~'fn [~'x] ~factbody)]
 
   ;; ~30ms to evaluate (fact 4)
   (defn eval-fact []
     (run 1 [q]
-     (evalo `(~factfn 4) q))))
+         (eval-expo factbody
+                    '((x 4))
+                    `((~'closure ~'x ~factbody 4 ()))
+                    q))))
 
+;; No return
 (defn gen-fact []
   (run 1 [q]
    (evalo `(~q 0) 1)
@@ -235,3 +243,12 @@
    (evalo `(~q 2) 2)
    (evalo `(~q 3) 6)
    (evalo `(~q 4) 24)))
+
+;; 46s to generate
+(defn gen-fact-fast []
+  (run 1 [q]
+       #_(eval-expo q '((x 0)) `((~'closure ~'x ~q ())) 1)
+       (eval-expo q '((x 1)) `((~'closure ~'x ~q 1 ())) 1)
+       (eval-expo q '((x 2)) `((~'closure ~'x ~q 2 ())) 2)
+       (eval-expo q '((x 3)) `((~'closure ~'x ~q 3 ())) 6)
+       (eval-expo q '((x 4)) `((~'closure ~'x ~q 4 ())) 24)))
