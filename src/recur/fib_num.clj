@@ -44,7 +44,6 @@
 (defn eval-expo [exp env selves val]
   (conde
    [(symbolo exp) (lookupo exp env val)]
-   #_[(numo exp) (== exp val)]
    [(fresh [rator rand x body env- a env2 selves2]
            (== `(~rator ~rand) exp)
            (eval-expo rator env selves `(~'closure ~x ~body ~env-))
@@ -54,13 +53,13 @@
            (eval-expo body env2 selves2 val))]
    [(fresh [x body]
            (== `(~'fn [~x] ~body) exp)
+           (== `(~'closure ~x ~body ~env) val)
            (symbolo x)
-           (not-in-envo 'fn env)
-           (== `(~'closure ~x ~body ~env) val))]
+           (not-in-envo 'fn env))]
    [(fresh [selfarg argv prevargv x body env- env2 t]
            (== `(~'recur ~selfarg) exp)
-           (not-in-envo 'recur env)
            (conso `(~'closure ~x ~body ~env-) t selves)
+           (not-in-envo 'recur env)
            (lookupo x env prevargv)
            (mentionso x selfarg)
            (eval-expo selfarg env selves argv)
@@ -82,11 +81,11 @@
    [(fresh [a l]
            (== `(~'<=1 ~a) exp)
            (not-in-envo '<=1 env)
-           (eval-expo a env selves l)
            (conde
             [(== l '()) (== val true)]
             [(== l '(1)) (== val true)]
-            [(>1o l) (== val false)]))]
+            [(>1o l) (== val false)])
+           (eval-expo a env selves l))]
    [(fresh [a1 a2 va1 va2]
            (== `(~'+ ~a1 ~a2) exp)
            (not-in-envo '+ env)
@@ -108,7 +107,15 @@
          (eval-expo fibbody
                     `((~'x ~(build-num 7)))
                     `((~'closure ~'x ~fibbody ()))
-                    q))))
+                    q)))
+
+  ;; ~757ms to evaluate back
+  (defn eval-fib-back []
+    (run 1 [q]
+         (eval-expo fibbody
+                    `((~'x ~q))
+                    `((~'closure ~'x ~fibbody ()))
+                    (build-num 13)))))
 
 (defn gen-fib []
   (run 1 [q]
@@ -121,27 +128,32 @@
 
 (defn gen-fib-fast []
   (run 1 [q]
-       (eval-expo q
-                  `((~'x ~(build-num 0)))
-                  `((~'closure ~'x ~q 1 ()))
-                  (build-num 0))
-       (eval-expo q
-                  `((~'x ~(build-num 1)))
-                  `((~'closure ~'x ~q 1 ()))
-                  (build-num 1))
-       (eval-expo q
-                  `((~'x ~(build-num 2)))
-                  `((~'closure ~'x ~q 1 ()))
-                  (build-num 1))
-       (eval-expo q
-                  `((~'x ~(build-num 3)))
-                  `((~'closure ~'x ~q 1 ()))
-                  (build-num 2))
-       (eval-expo q
-                  `((~'x ~(build-num 4)))
-                  `((~'closure ~'x ~q 1 ()))
-                  (build-num 3))
-       (eval-expo q
-                  `((~'x ~(build-num 5)))
-                  `((~'closure ~'x ~q 1 ()))
-                  (build-num 5))))
+       (fresh [s2]
+              (== q `(~'if (~'<=1 ~'x)
+                       ~'x
+                       (~'+ (~'recur (~'dec ~'x))
+                            ~s2)))
+              (eval-expo q
+                         `((~'x ~(build-num 0)))
+                         `((~'closure ~'x ~q ()))
+                         (build-num 0))
+              (eval-expo q
+                         `((~'x ~(build-num 1)))
+                         `((~'closure ~'x ~q ()))
+                         (build-num 1))
+              (eval-expo q
+                         `((~'x ~(build-num 2)))
+                         `((~'closure ~'x ~q ()))
+                         (build-num 1))
+              (eval-expo q
+                         `((~'x ~(build-num 3)))
+                         `((~'closure ~'x ~q ()))
+                         (build-num 2))
+              (eval-expo q
+                         `((~'x ~(build-num 4)))
+                         `((~'closure ~'x ~q ()))
+                         (build-num 3))
+              (eval-expo q
+                         `((~'x ~(build-num 5)))
+                         `((~'closure ~'x ~q ()))
+                         (build-num 5)))))
