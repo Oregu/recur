@@ -2,21 +2,14 @@
   (:refer-clojure :exclude [==])
   (:use [clojure.core.logic]))
 
-(defn numb [n]
-  (with-meta n {:num true}))
-
 (defn zeroo [n]
-  (== (numb '()) n))
+  (== '() n))
 
 (defn build-num [n]
-  (numb
-   (cond
-    (odd? n) (cons 1 (build-num (quot (- n 1) 2)))
-    (and (not (zero? n)) (even? n)) (cons 0 (build-num (quot n 2)))
-    (zero? n) '())))
-
-(defn numo [n]
-  (predc n (fn [x] (:num (meta x)))))
+  (cond
+   (odd? n) (cons 1 (build-num (quot (- n 1) 2)))
+   (and (not (zero? n)) (even? n)) (cons 0 (build-num (quot n 2)))
+   (zero? n) '()))
 
 (defn poso [n]
   (fresh [a d]
