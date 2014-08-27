@@ -154,9 +154,9 @@
    [(fresh [x body]
            (not-num-or-symo exp)
            (== `(~'fn [~x] ~body) exp)
+           (== `(~'closure ~x ~body ~env) val)
            (symbolo x)
-           (not-in-envo 'fn env)
-           (== `(~'closure ~x ~body ~env) val))]
+           (not-in-envo 'fn env))]
    [(fresh [selfarg argv prevargv x body env- env+ t selves-]
            (not-num-or-symo exp)
            (== `(~'recur ~selfarg) exp)
@@ -167,10 +167,10 @@
            (conso `(~'closure ~x ~body ~prevargv ~env-) t selves)
            (symbolo x)
            (numbero argv)
+           (fd/in argv prevargv (fd/interval 25)) ;; TODO
            (eval-expo selfarg env selves argv)
            (not-num-or-symo selfarg)
            (mentionso x selfarg)
-           (fd/in argv prevargv (fd/interval 25)) ;; TODO
            (fd/< argv prevargv)
            (conso `(~x ~argv) env- env+)
            (conso `(~'closure ~x ~body ~argv ~env-) t selves-)
@@ -182,7 +182,7 @@
            (conde [(== t true)] [(== t false)])
            (eval-expo e1 env selves t)
            (conde
-            [(== true  t)
+            [(== true t)
              (eval-expo e2 env selves val)]
             [(== false t)
              (eval-expo e3 env selves val)]))]
@@ -192,19 +192,20 @@
            (not-in-envo 'dec env)
            (numbero val)
            (numbero n)
-           (eval-expo a env selves n)
            (fd/in n val (fd/interval 25)) ;; TODO
+           (eval-expo a env selves n)
            (fd/+ 1 val n))]
    [(fresh [a l]
            (not-num-or-symo exp)
+           (not-num-or-symo val)
            (== `(~'<=1 ~a) exp)
            (not-in-envo '<=1 env)
            (numbero l)
-           (eval-expo a env selves l)
            (conde
             [(== l 0) (== val true)]
             [(== l 1) (== val true)]
-            [(!= l 0) (!= l 1) (fd/> l 1) (== val false)]))]
+            [(!= l 0) (!= l 1) (== val false)])
+           (eval-expo a env selves l))]
    [(fresh [a1 a2 va1 va2]
            (not-num-or-symo exp)
            (== `(~'* ~a1 ~a2) exp)
@@ -212,9 +213,9 @@
            (numbero va1)
            (numbero va2)
            (numbero val)
+           (fd/in va1 va2 val (fd/interval 25)) ;; TODO
            (eval-expo a1 env selves va1)
            (eval-expo a2 env selves va2)
-           (fd/in va1 va2 val (fd/interval 25)) ;; TODO
            (fd/* va1 va2 val))]))
 
 (defn evalo [e v]
@@ -244,7 +245,7 @@
    (evalo `(~q 3) 6)
    (evalo `(~q 4) 24)))
 
-;; 46s to generate
+;; 23s to generate
 (defn gen-fact-fast []
   (run 1 [q]
        #_(eval-expo q '((x 0)) `((~'closure ~'x ~q ())) 1)
