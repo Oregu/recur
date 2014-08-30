@@ -56,24 +56,20 @@
     (== true v)]
    [(fresh [h t]
      (!= l '())
-     (conso h t l)
-     (== false v))]))
+     (== false v)
+     (conso h t l))]))
 
 (defn mentionso [x form]
-  (conde
-   [(fresh [h t]
-     (conso h t form)
+  (fresh [h t]
+   (conde
+    [(== h x)
      (symbolo h)
-     (== h x))]
-   [(fresh [h t]
-     (!= h x)
+     (conso h t form)]
+    [(!= h x)
      (symbolo h)
      (conso h t form)
-     (mentionso x t))]
-   [(fresh [h t]
-     (!= h x)
-     (conso h t form)
-     (mentionso x h))]))
+     (conde [(mentionso x t)]
+            [(mentionso x h)])])))
 
 (defn eval-expo [exp env selves val]
   (conde
@@ -93,9 +89,9 @@
      (eval-expo body env2 selves2 val))]
    [(fresh [x body]
      (== `(~'fn [~x] ~body) exp)
+     (== `(~'closure ~x ~body ~env) val)
      (symbolo x)
-     (not-in-envo 'fn env)
-     (== `(~'closure ~x ~body ~env) val))]
+     (not-in-envo 'fn env))]
    [(fresh [selfarg argv prevargv x body env- env2 t]
      (== `(~'recur ~selfarg) exp)
      (not-in-envo 'recur env)
@@ -114,13 +110,13 @@
       [(== true  t) (eval-expo e2 env selves val)]
       [(== false t) (eval-expo e3 env selves val)]))]
    [(== `(~'zero) exp)
-    (not-in-envo 'zero env)
-    (zeroo val)]
+    (zeroo val)
+    (not-in-envo 'zero env)]
    [(fresh [a n]
      (== `(~'inc ~a) exp)
      (not-in-envo 'inc env)
-     (eval-expo a env selves n)
-     (inco n val))]
+     (inco n val)
+     (eval-expo a env selves n))]
    [(fresh [a l]
      (== `(~'empty? ~a) exp)
      (not-in-envo 'empty? env)
@@ -144,6 +140,7 @@
                 (zero)
                 (inc (recur (rest x)))))]
 
+  ;; 14ms to eval
   (defn eval-length []
     (run* [q]
           (eval-expo `(~lnfn ~'(list (zero) (zero) (zero))) '() '() q))))

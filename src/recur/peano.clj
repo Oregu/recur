@@ -2,16 +2,11 @@
   (:refer-clojure :exclude [==])
   (:use [clojure.core.logic]))
 
-(defn peanoo [u] (predc u (fn [x] (:peano (meta x)))))
-
-(defn peano [n]
-  (with-meta n {:peano true}))
-
 (defn zeroo [num]
-  (== (peano '(z)) num))
+  (== '(z) num))
 
 (defn build-num [n]
-  (peano (into '(z) (repeat n 's))))
+  (into '(z) (repeat n 's)))
 
 (defn inco [num num+]
   (all
@@ -46,4 +41,3 @@
      (inco ts s)
      (inco d1 a1)
      (+o d1 a2 ts))]))
-
