@@ -2,6 +2,9 @@
   (:refer-clojure :exclude [==])
   (:use [clojure.core.logic]))
 
+(defn zero [] '(z))
+(defn inc [n] (cons 's n))
+
 (defn zeroo [num]
   (== '(z) num))
 
@@ -26,7 +29,7 @@
 (defn <=1o [n v]
   (conde
    [(zeroo n)   (== v true)]
-   [(== (peano '(s z)) n) (== v true)]
+   [(== '(s z) n) (== v true)]
    [(!= '(z) n)
     (!= '(s z) n)
     (== v false)]))
