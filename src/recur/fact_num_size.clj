@@ -67,12 +67,12 @@
            (== `(~'recur ~selfarg) exp)
            (peano/inco size-start' size-start)
            (conso `(~'closure ~x ~body ~env-) t selves)
+           (conso `(~x ~argv) env- env+)
            (not-in-envo 'recur env)
            (lookupo x env prevargv)
            (mentionso x selfarg)
            (eval-expo selfarg env selves argv size-start' size-left)
            (<o argv prevargv)
-           (conso `(~x ~argv) env- env+)
            (eval-expo body env+ selves val s1 s2))]
    [(fresh [e1 e2 e3 t size-start' size-left' size-left'']
            (== `(~'if ~e1 ~e2 ~e3) exp)
@@ -81,8 +81,12 @@
            (eval-expo e1 env selves t size-start' size-left')
            (conde
             [(== true t)
-             (eval-expo e2 env selves val size-left' size-left'')]
+             ;; TODO we don't go to other branch
+             (peano/inco size-left' size-left'')
+             (eval-expo e2 env selves val size-left'' size-left)]
             [(== false t)
+             ;; TODO we don't go to other branch
+             (peano/inco size-left' size-left'')
              (eval-expo e3 env selves val size-left'' size-left)]))]
    [(fresh [a n size-start']
            (== `(~'dec ~a) exp)
