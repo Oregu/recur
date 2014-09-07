@@ -132,6 +132,13 @@
                   `((~'closure ~'x ~q ()))
                   (build-num 24))))
 
+(defn gen-dec-dec []
+  (run 1 [q]
+       (eval-expo q
+                  `((~'x ~(build-num 2)))
+                  `()
+                  (build-num 0))))
+
 ;; TODO
 (defn gen-fact []
   (run 1 [q]

@@ -116,11 +116,17 @@
   (all #_(noo 'closure exp)
        (eval-expo exp '() '() val size-start (peano/zero))))
 
-#_(defn eval-find-smallesto [exp val size]
-  (loop [sz (peano/zero)]
-       (conda
-        [(fresh () (== sz size) (evalo exp val sz))]
-        [(recur (peano/inc sz))])))
+(defn eval-find-smallesto
+  ([exp val sz size]
+     (eval-find-smallesto exp '() '() val sz (peano/zero)))
+  ([exp env selves val sz size]
+     (conda
+      [(all
+        (== size sz)
+        (eval-expo exp env selves val sz (peano/zero))
+        (trace-lvars "sz" [sz size]))]
+      [(trace-lvars "recur" [sz size])
+       (eval-find-smallesto exp env selves val (peano/inc sz) size)])))
 
 ;; Factorial
 
@@ -141,23 +147,40 @@
 
 ;; Generates fact body in 13s
 (defn gen-fact-fast []
-  (run 1 [q]
-       (eval-expo q
-                  `((~'x ~(build-num 1)))
-                  `((~'closure ~'x ~q ()))
-                  (build-num 1))
-       (eval-expo q
-                  `((~'x ~(build-num 2)))
-                  `((~'closure ~'x ~q ()))
-                  (build-num 2))
-       (eval-expo q
-                  `((~'x ~(build-num 3)))
-                  `((~'closure ~'x ~q ()))
-                  (build-num 6))
-       (eval-expo q
-                  `((~'x ~(build-num 4)))
-                  `((~'closure ~'x ~q ()))
-                  (build-num 24))))
+  (run 1 [q size]
+       (eval-find-smallesto q
+                            `((~'x ~(build-num 1)))
+                            `((~'closure ~'x ~q ()))
+                            (build-num 1)
+                            (peano/zero)
+                            size)
+       (eval-find-smallesto q
+                            `((~'x ~(build-num 2)))
+                            `((~'closure ~'x ~q ()))
+                            (build-num 2)
+                            (peano/zero)
+                            size)
+       (eval-find-smallesto q
+                            `((~'x ~(build-num 3)))
+                            `((~'closure ~'x ~q ()))
+                            (build-num 6)
+                            (peano/zero)
+                            size)
+       (eval-find-smallesto q
+                            `((~'x ~(build-num 4)))
+                            `((~'closure ~'x ~q ()))
+                            (build-num 24)
+                            (peano/zero)
+                            size)))
+
+(defn gen-dec-dec []
+  (run 1 [q size]
+       (eval-find-smallesto q
+                            `((~'x ~(build-num 2)))
+                            '()
+                            (build-num 0)
+                            (peano/zero)
+                            size)))
 
 ;; TODO
 (defn gen-fact []
