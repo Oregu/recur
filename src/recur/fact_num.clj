@@ -60,11 +60,11 @@
            (== `(~'recur ~selfarg) exp)
            (conso `(~'closure ~x ~body ~env-) t selves)
            (not-in-envo 'recur env)
-           (lookupo x env prevargv)
-           (mentionso x selfarg)
-           (eval-expo selfarg env selves argv)
-           (<o argv prevargv)
+           ;; (mentionso x selfarg)
+           ;; (lookupo x env prevargv)
+           ;; (<o argv prevargv)
            (conso `(~x ~argv) env- env+)
+           (eval-expo selfarg env selves argv)
            (eval-expo body env+ selves val))]
    [(fresh [e1 e2 e3 t]
            (== `(~'if ~e1 ~e2 ~e3) exp)
@@ -113,6 +113,10 @@
                     q))))
 
 ;; Generates fact body in 13s
+;; (in case if you uncomment mentionso and <o calls)
+;;
+;; With <o it generates in 26s
+;; and without those it takes 70s.
 (defn gen-fact-fast []
   (run 1 [q]
        (eval-expo q

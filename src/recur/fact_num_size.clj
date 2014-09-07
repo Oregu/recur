@@ -122,12 +122,12 @@
   ([exp val sz size]
      (eval-find-smallesto exp '() '() val sz (peano/zero)))
   ([exp env selves val sz size]
-     (conda
+     (conde
       [(all
         (== size sz)
         (eval-expo exp env selves val sz (peano/zero))
-        (trace-lvars "sz" [sz size]))]
-      [(trace-lvars "recur" [sz size])
+        #_(trace-lvars "sz" [sz size]))]
+      [#_(trace-lvars "recur" [sz size])
        (eval-find-smallesto exp env selves val (peano/inc sz) size)])))
 
 ;; Factorial
