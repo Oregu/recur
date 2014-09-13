@@ -6,10 +6,10 @@
 
 ;; Factorial recursive program evaluator.
 ;; Implemented with Oleg's numbers.
-;; Runs forward in 20ms.
+;; Runs forward in 77ms.
 ;;
-;; Can generate factorial in 55 seconds.
-;; But uncomment numo branch and it doesn't return.
+;; Can generate factorial in 13 seconds.
+;; Or in 70 if remove <o and mentionso constraints
 
 
 (defn symbolo [x] (predc x symbol?))
@@ -60,11 +60,11 @@
            (== `(~'recur ~selfarg) exp)
            (conso `(~'closure ~x ~body ~env-) t selves)
            (not-in-envo 'recur env)
-           ;; (mentionso x selfarg)
-           ;; (lookupo x env prevargv)
-           ;; (<o argv prevargv)
-           (conso `(~x ~argv) env- env+)
+           (lookupo x env prevargv)
+           (mentionso x selfarg)
            (eval-expo selfarg env selves argv)
+           (<o argv prevargv)
+           (conso `(~x ~argv) env- env+)
            (eval-expo body env+ selves val))]
    [(fresh [e1 e2 e3 t]
            (== `(~'if ~e1 ~e2 ~e3) exp)
