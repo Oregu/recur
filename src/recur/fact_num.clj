@@ -42,57 +42,63 @@
                   [(mentionso x h)])])))
 
 (defn eval-expo [exp env selves val]
-  (conde
-   [(symbolo exp) (lookupo exp env val)]
-   [(fresh [rator rand x body env- a env+ selves+]
-           (== `(~rator ~rand) exp)
-           (eval-expo rator env selves `(~'closure ~x ~body ~env-))
-           (eval-expo rand env selves a)
-           (conso `(~x ~a) env- env+)
-           (conso `(~'closure ~x ~body ~env-) selves selves+)
-           (eval-expo body env+ selves+ val))]
-   [(fresh [x body]
-           (== `(~'fn [~x] ~body) exp)
-           (== `(~'closure ~x ~body ~env) val)
-           (symbolo x)
-           (not-in-envo 'fn env))]
-   [(fresh [selfarg argv prevargv x body env- env+ t]
-           (== `(~'recur ~selfarg) exp)
-           (conso `(~'closure ~x ~body ~env-) t selves)
-           (not-in-envo 'recur env)
-           (lookupo x env prevargv)
-           (mentionso x selfarg)
-           (eval-expo selfarg env selves argv)
-           (<o argv prevargv)
-           (conso `(~x ~argv) env- env+)
-           (eval-expo body env+ selves val))]
-   [(fresh [e1 e2 e3 t]
-           (== `(~'if ~e1 ~e2 ~e3) exp)
-           (not-in-envo 'if env)
-           (eval-expo e1 env selves t)
-           (conde
-            [(== true  t) (eval-expo e2 env selves val)]
-            [(== false t) (eval-expo e3 env selves val)]))]
-   [(fresh [a n]
-           (== `(~'dec ~a) exp)
-           (not-in-envo 'dec env)
-           (eval-expo a env selves n)
-           (+o '(1) val n))]
-   [(fresh [a l]
-           (== `(~'<=1 ~a) exp)
-           (not-in-envo '<=1 env)
-           (conde
-            [(== l '()) (== val true)]
-            [(== l '(1)) (== val true)]
-            [(>1o l) (== val false)])
-           (eval-expo a env selves l))]
-   [(fresh [a1 a2 va1 va2 v]
-           (== `(~'* ~a1 ~a2) exp)
-           (== v val)
-           (not-in-envo '* env)
-           (*o va1 va2 v)
-           (eval-expo a1 env selves va1)
-           (eval-expo a2 env selves va2))]))
+  (all
+   #_(trace-lvars "evalo" [exp env val])
+   (conde
+     [(symbolo exp) (lookupo exp env val)]
+     [(fresh [n]
+             (== `(:numc ~n) exp)
+             (== `(:numv ~n) val))]
+     [(fresh [rator rand x body env- a env+ selves+]
+             (== `(~rator ~rand) exp)
+             (eval-expo rator env selves `(~'closure ~x ~body ~env-))
+             (eval-expo rand env selves a)
+             (conso `(~x ~a) env- env+)
+             (conso `(~'closure ~x ~body ~env-) selves selves+)
+             (eval-expo body env+ selves+ val))]
+     [(fresh [x body]
+             (== `(~'fn [~x] ~body) exp)
+             (== `(~'closure ~x ~body ~env) val)
+             (symbolo x)
+             (not-in-envo 'fn env))]
+     [(fresh [selfarg argv prevargv x body env- env+ t]
+             (== `(~'recur ~selfarg) exp)
+             (conso `(~'closure ~x ~body ~env-) t selves)
+             (not-in-envo 'recur env)
+             (lookupo x env `(:numv ~prevargv))
+             (mentionso x selfarg)
+             (eval-expo selfarg env selves `(:numv ~argv))
+             (<o argv prevargv)
+             (conso `(~x (:numv ~argv)) env- env+)
+             (eval-expo body env+ selves val))]
+     [(fresh [e1 e2 e3 t]
+             (== `(~'if ~e1 ~e2 ~e3) exp)
+             (not-in-envo 'if env)
+             (eval-expo e1 env selves t)
+             (conde
+              [(== true  t) (eval-expo e2 env selves val)]
+              [(== false t) (eval-expo e3 env selves val)]))]
+     [(fresh [a n v]
+             (== `(~'dec ~a) exp)
+             (== `(:numv ~v) val)
+             (not-in-envo 'dec env)
+             (eval-expo a env selves `(:numv ~n))
+             (+o '(1) v n))]
+     [(fresh [a l]
+             (== `(~'<=1 ~a) exp)
+             (not-in-envo '<=1 env)
+             (conde
+              [(== l '()) (== val true)]
+              [(== l '(1)) (== val true)]
+              [(>1o l) (== val false)])
+             (eval-expo a env selves `(:numv ~l)))]
+     [(fresh [a1 a2 va1 va2 v]
+             (== `(~'* ~a1 ~a2) exp)
+             (== `(:numv ~v) val)
+             (not-in-envo '* env)
+             (*o va1 va2 v)
+             (eval-expo a1 env selves `(:numv ~va1))
+             (eval-expo a2 env selves `(:numv ~va2)))])))
 
 (defn evalo [e v]
   (eval-expo e '() '() v))
@@ -108,14 +114,18 @@
   (defn eval-fact []
     (run 1 [q]
          (eval-expo factbody
-                    `((~'x ~(build-num 4)))
+                    `((~'x (:numv ~(build-num 4))))
                     `((~'closure ~'x ~factbody ()))
-                    q))))
+                    q)))
+
+  (defn eval-fact-n []
+    (run 1 [q]
+         (evalo `(~factfn (:numc ~(build-num 4))) q))))
 
 ;; Generates fact body in 13s
 ;; (in case if you uncomment mentionso and <o calls)
 ;;
-;; With <o it generates in 26s
+;; With only <o it generates in 26s
 ;; and without those it takes 70s.
 (defn gen-fact-fast []
   (run 1 [q]
