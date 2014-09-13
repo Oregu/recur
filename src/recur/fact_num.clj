@@ -10,6 +10,11 @@
 ;;
 ;; Can generate factorial in 13 seconds.
 ;; Or in 70 if remove <o and mentionso constraints
+;; This was before I added numerals to interpreter.
+;;
+;; With numerals it runs slower and generates factorial
+;; in 146ms with constants (gen-fact).
+;; Or generates factorial body (gen-fact-fast) in 36ms.
 
 
 (defn symbolo [x] (predc x symbol?))
@@ -105,58 +110,39 @@
 
 ;; Fibonacci
 
-(let [factbody '(if (<=1 x)
-                  x
-                  (* x (recur (dec x))))
-      factfn `(~'fn [~'x] ~factbody)]
+(let [fact '(fn [x]
+              (if (<=1 x)
+                x
+                (* x (recur (dec x)))))]
 
-  ;; ~75ms to evaluate (fact 4)
+  ;; ~70ms to evaluate (fact 4)
   (defn eval-fact []
     (run 1 [q]
-         (eval-expo factbody
-                    `((~'x (:numv ~(build-num 4))))
-                    `((~'closure ~'x ~factbody ()))
-                    q)))
+         (evalo `(~fact (:numc ~(build-num 4))) q))))
 
-  (defn eval-fact-n []
-    (run 1 [q]
-         (evalo `(~factfn (:numc ~(build-num 4))) q))))
-
-;; Generates fact body in 13s
+;; Generates fact body in 13ms
 ;; (in case if you uncomment mentionso and <o calls)
 ;;
 ;; With only <o it generates in 26s
 ;; and without those it takes 70s.
+;;
+;; After adding num constants, it generates in 36ms
+;;
 (defn gen-fact-fast []
   (run 1 [q]
        (eval-expo q
-                  `((~'x ~(build-num 1)))
+                  `((~'x (:numv ~(build-num 1))))
                   `((~'closure ~'x ~q ()))
-                  (build-num 1))
+                  `(:numv ~(build-num 1)))
        (eval-expo q
-                  `((~'x ~(build-num 2)))
+                  `((~'x (:numv ~(build-num 2))))
                   `((~'closure ~'x ~q ()))
-                  (build-num 2))
+                  `(:numv ~(build-num 2)))
        (eval-expo q
-                  `((~'x ~(build-num 3)))
+                  `((~'x (:numv ~(build-num 3))))
                   `((~'closure ~'x ~q ()))
-                  (build-num 6))
+                  `(:numv ~(build-num 6)))
        (eval-expo q
-                  `((~'x ~(build-num 4)))
+                  `((~'x (:numv ~(build-num 4))))
                   `((~'closure ~'x ~q ()))
-                  (build-num 24))))
-
-(defn gen-dec-dec []
-  (run 1 [q]
-       (eval-expo q
-                  `((~'x ~(build-num 2)))
-                  `()
-                  (build-num 0))))
-
-;; TODO
-(defn gen-fact []
-  (run 1 [q]
-       (evalo `(~q (:numc ~(build-num 1))) `(:numv ~(build-num 1)))
-       (evalo `(~q (:numc ~(build-num 2))) `(:numv ~(build-num 2)))
-       (evalo `(~q (:numc ~(build-num 3))) `(:numv ~(build-num 6)))
-       (evalo `(~q (:numc ~(build-num 4))) `(:numv ~(build-num 24)))))
+                  `(:numv ~(build-num 24)))))
