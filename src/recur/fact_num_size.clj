@@ -41,7 +41,7 @@
 
 (defn eval-expo [exp env selves val size-start size-left]
   (all
-   #_(trace-lvars "eval" [exp val size-start size-left])
+   (trace-lvars "eval" [exp val size-start size-left])
    (conde
      [(symbolo exp)
       (peano/inco size-left size-start)
@@ -76,19 +76,19 @@
              (eval-expo selfarg env selves argv size-start' size-left)
              (<o argv prevargv)
              (eval-expo body env+ selves val s1 s2))]
-     [(fresh [e1 e2 e3 t size-start' size-left' size-left'']
+     [(fresh [e1 e2 e3 t val-other size-start' size-left' size-left'']
              (== `(~'if ~e1 ~e2 ~e3) exp)
              (peano/inco size-start' size-start)
              (not-in-envo 'if env)
              (eval-expo e1 env selves t size-start' size-left')
              (conde
               [(== true t)
-               ;; TODO we don't go to other branch
-               (peano/inco size-left' size-left'')
+               ;; For the sake of sizing
+               (eval-expo e3 env selves val-other size-left' size-left'')
                (eval-expo e2 env selves val size-left'' size-left)]
               [(== false t)
-               ;; TODO we don't go to other branch
-               (peano/inco size-left' size-left'')
+               ;; For the sake of sizing
+               (eval-expo e2 env selves val-other size-left' size-left'')
                (eval-expo e3 env selves val size-left'' size-left)]))]
      [(fresh [a n size-start']
              (== `(~'dec ~a) exp)
@@ -175,6 +175,7 @@
                             (peano/zero)
                             size)))
 
+;; (dec (dec x))
 (defn gen-dec-dec []
   (run 1 [q size]
        (eval-find-smallesto q
@@ -184,10 +185,33 @@
                             (peano/zero)
                             size)))
 
-;; TODO
-(defn gen-fact []
-  (run 1 [q]
-       (evalo `(~q (:numc ~(build-num 1))) `(:numv ~(build-num 1)))
-       (evalo `(~q (:numc ~(build-num 2))) `(:numv ~(build-num 2)))
-       (evalo `(~q (:numc ~(build-num 3))) `(:numv ~(build-num 6)))
-       (evalo `(~q (:numc ~(build-num 4))) `(:numv ~(build-num 24)))))
+(defn eval-if-size []
+  (run 1 [q sz]
+       (eval-expo '(if (<=1 x) x (dec x))
+                  `((~'x ~(build-num 4)))
+                  `()
+                  q
+                  sz
+                  (peano/zero))))
+
+;; (if (<=1 x) x (dec x))
+(defn gen-if-cond []
+  (run 1 [q size]
+       (eval-find-smallesto q
+                            `((~'x ~(build-num 0)))
+                            '()
+                            (build-num 0)
+                            (peano/zero)
+                            size)
+       (eval-find-smallesto q
+                            `((~'x ~(build-num 1)))
+                            '()
+                            (build-num 1)
+                            (peano/zero)
+                            size)
+       (eval-find-smallesto q
+                            `((~'x ~(build-num 2)))
+                            '()
+                            (build-num 1)
+                            (peano/zero)
+                            size)))
