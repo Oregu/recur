@@ -39,9 +39,21 @@
            (conde [(mentionso x t)]
                   [(mentionso x h)])])))
 
+#_(defn sizeo [form size-start size-left]
+  (fresh [h t size-start']
+         (trace-lvars "sizeo" [form size-left size-start])
+         (conde
+          [(conso h t form)
+           (trace-lvars "sz" [form h t size-left size-start])
+           (symbolo h)
+           (peano/inco size-start' size-start)
+           (sizeo t size-start' size-left)]
+          [(== '() form)
+           (== size-start size-left)])))
+
 (defn eval-expo [exp env selves val size-start size-left]
   (all
-   (trace-lvars "eval" [exp val size-start size-left])
+   #_(trace-lvars "eval" [exp env val size-start size-left])
    (conde
      [(symbolo exp)
       (peano/inco size-left size-start)
@@ -81,6 +93,7 @@
              (peano/inco size-start' size-start)
              (not-in-envo 'if env)
              (eval-expo e1 env selves t size-start' size-left')
+             (trace-lvars "if" [e1 t exp val size-start size-left])
              (conde
               [(== true t)
                ;; For the sake of sizing
@@ -175,7 +188,7 @@
                             (peano/zero)
                             size)))
 
-;; (dec (dec x))
+;; 115ms (dec (dec x))
 (defn gen-dec-dec []
   (run 1 [q size]
        (eval-find-smallesto q
@@ -185,6 +198,7 @@
                             (peano/zero)
                             size)))
 
+;; 7ms size 6
 (defn eval-if-size []
   (run 1 [q sz]
        (eval-expo '(if (<=1 x) x (dec x))
@@ -197,21 +211,22 @@
 ;; (if (<=1 x) x (dec x))
 (defn gen-if-cond []
   (run 1 [q size]
+       (== size (peano/build-num 6))
        (eval-find-smallesto q
                             `((~'x ~(build-num 0)))
                             '()
                             (build-num 0)
                             (peano/zero)
-                            size)
+                            (build-num 6))
        (eval-find-smallesto q
                             `((~'x ~(build-num 1)))
                             '()
                             (build-num 1)
                             (peano/zero)
-                            size)
+                            (build-num 6))
        (eval-find-smallesto q
                             `((~'x ~(build-num 2)))
                             '()
                             (build-num 1)
                             (peano/zero)
-                            size)))
+                            (build-num 6))))
